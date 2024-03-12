@@ -3,4 +3,5 @@ project(lab15 C)
 
 set(CMAKE_C_STANDARD 11)
 
-add_executable(lab15 main.c)
+add_executable(lab15 main.c
+        libs/matrix.h)
