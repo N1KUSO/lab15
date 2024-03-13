@@ -7,12 +7,6 @@
 #include <assert.h>
 #include <stdbool.h>
 
-#define SWAP(type, a, b) { \
-type t = a;                \
-a = b;                     \
-t = a;                     \
-}
-
 typedef struct matrix {
     int **values;
     int nRows;
@@ -212,6 +206,40 @@ void transposeMatrix(matrix *m) {
     int temp = m->nRows;
     m->nRows = m->nCols;
     m->nCols = temp;
+}
+
+position getMinValuePos(matrix m) {
+    int minVal = m.values[0][0];
+    position minPos = {0, 0};
+
+    for(int i = 0; i < m.nRows; i++) {
+        for (int j = 0; j < m.nCols; j++) {
+            if(m.values[i][j] < minVal) {
+                minVal = m.values[i][j];
+                minPos.rowIndex = i;
+                minPos.colIndex = j;
+            }
+        }
+    }
+
+    return minPos;
+}
+
+position getMaxValuePos(matrix m) {
+    int maxVal = m.values[0][0];
+    position maxPos = {0, 0};
+
+    for(int i = 0; i < m.nRows; i++) {
+        for (int j = 0; j < m.nCols; j++) {
+            if(m.values[i][j] > maxVal) {
+                maxVal = m.values[i][j];
+                maxPos.rowIndex = i;
+                maxPos.colIndex = j;
+            }
+        }
+    }
+
+    return maxPos;
 }
 
 #endif
