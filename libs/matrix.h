@@ -5,6 +5,13 @@
 #include <malloc.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <stdbool.h>
+
+#define SWAP(type, a, b) { \
+type t = a;                \
+a = b;                     \
+t = a;                     \
+}
 
 typedef struct matrix {
     int **values;
@@ -131,6 +138,80 @@ void selectionSortColsMatrixByColCriteria(matrix m, int (*criteria)(int*, int)) 
             }
         }
     }
+}
+
+bool isSquareMatrix(matrix *m) {
+    return m->nRows == m->nCols;
+}
+
+bool areTwoMatricesEqual(matrix *m1, matrix *m2) {
+    if (m1->nRows != m2->nRows || m1->nCols != m2->nCols) {
+        return false;
+    }
+    for (int i = 0; i < m1->nRows; i++) {
+        for (int j = 0; j < m1->nCols; j++) {
+            if (m1->values[i][j] != m2->values[i][j]) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+bool isEMatrix(matrix *m) {
+    if (!isSquareMatrix(m)) {
+        return false;
+    }
+    for (int i = 0; i < m->nRows; i++) {
+        for (int j = 0; j < m->nCols; j++) {
+            if ((i == j && m->values[i][j] != 1) || (i != j && m->values[i][j] != 0)) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+bool isSymmetricMatrix(matrix *m) {
+    if (!isSquareMatrix(m)) {
+        return false;
+    }
+    for (int i = 0; i < m->nRows; i++) {
+        for (int j = 0; j < i; j++) {
+            if (m->values[i][j] != m->values[j][i]) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+void transposeSquareMatrix(matrix *m) {
+    for (int i = 0; i < m->nRows; i++) {
+        for (int j = i + 1; j < m->nCols; j++) {
+            int temp = m->values[i][j];
+            m->values[i][j] = m->values[j][i];
+            m->values[j][i] = temp;
+        }
+    }
+}
+
+void transposeMatrix(matrix *m) {
+    int **newValues = (int **)malloc(m->nCols * sizeof(int *));
+    for (int i = 0; i < m->nCols; i++) {
+        newValues[i] = (int *)malloc(m->nRows * sizeof(int));
+        for (int j = 0; j < m->nRows; j++) {
+            newValues[i][j] = m->values[j][i];
+        }
+    }
+
+    freeMemMatrix(m);
+
+    m->values = newValues;
+        
+    int temp = m->nRows;
+    m->nRows = m->nCols;
+    m->nCols = temp;
 }
 
 #endif
