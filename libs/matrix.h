@@ -65,6 +65,7 @@ void outputMatrix(matrix m) {
         for (int j = 0; j < m.nCols; j++) {
             printf("%d\t", m.values[i][j]);
         }
+        printf("\n");
     }
 }
 
@@ -72,64 +73,82 @@ void outputMatrices(matrix *ms, int nMatrices) {
     for (int i = 0; i < nMatrices; i++) {
         outputMatrix(ms[i]);
     }
+    printf("\n");
 }
 
-void swapRows(matrix m, int i1, int i2) {
-    assert(i1 >= 0 && i1 < m.nRows && i2 >= 0 && i2 < m.nRows);
+void swapRows(matrix *m, int i1, int i2) {
+    assert(i1 >= 0 && i1 < m->nRows && i2 >= 0 && i2 < m->nRows);
 
-    int *temp = m.values[i1];
-    m.values[i1] = m.values[i2];
-    m.values[i2] = temp;
+    int *temp = m->values[i1];
+    m->values[i1] = m->values[i2];
+    m->values[i2] = temp;
 }
 
-void swapColumns(matrix m, int j1, int j2) {
-    assert(j1 >= 0 && j1 < m.nCols && j2 >= 0 && j2 < m.nCols);
+void swapColumns(matrix *m, int j1, int j2) {
+    assert(j1 >= 0 && j1 < m->nCols && j2 >= 0 && j2 < m->nCols);
 
-    for (int i = 0; i < m.nRows; i++) {
-        int temp = m.values[i][j1];
-        m.values[i][j1] = m.values[i][j2];
-        m.values[i][j2] = temp;
+    for (int i = 0; i < m->nRows; i++) {
+        int temp = m->values[i][j1];
+        m->values[i][j1] = m->values[i][j2];
+        m->values[i][j2] = temp;
     }
+}
+
+void swap(int *a, int *b) {
+    int *temp = a;
+    a = b;
+    b = temp;
+}
+
+int getMaxElementIndexInArray(const int a[], size_t n) {
+    int maxIndex = 0;
+    for(int i = 1; i < n; i++){
+        if(a[i] > a[maxIndex]){
+            maxIndex = i;
+        }
+    }
+
+    return maxIndex;
 }
 
 void insertionSortRowsMatrixByRowCriteria(matrix m, int (*criteria)(int *, int)) {
-    int *criteriaValues = (int *) malloc(m.nRows * sizeof(int));
-
-    for (int i = 0; i < m.nRows; i++) {
-        criteriaValues[i] = criteria(m.values[i], m.nCols);
+    int *values = malloc(sizeof(int) * m.nRows);
+    for (size_t i = 0; i < m.nRows; i++) {
+        values[i] = criteria(m.values[i], m.nCols);
     }
 
     for (int i = 1; i < m.nRows; i++) {
-        int key = criteriaValues[i];
-        int *tempRow = m.values[i];
         int j = i - 1;
 
-        while (j >= 0 && criteriaValues[j] > key) {
-            criteriaValues[j + 1] = criteriaValues[j];
-            m.values[j + 1] = m.values[j];
-            j--;
+        while (values[i] < values[j] && j >= 0) {
+            values[j + 1] = values[j];
+            swapRows(&m, j + 1, j);
+            --j;
         }
 
-        criteriaValues[j + 1] = key;
-        m.values[j + 1] = tempRow;
+        values[j + 1] = values[i];
     }
-
-    free(criteriaValues);
 }
 
-void selectionSortColsMatrixByColCriteria(matrix m, int (*criteria)(int*, int)) {
-    for (int i = 0; i < m.nCols; i++) {
-        int minColIndex = i;
-        for (int j = i + 1; j < m.nCols; j++) {
-            if (criteria(m.values[j], m.nRows) < criteria(m.values[minColIndex], m.nRows)) {
-                minColIndex = j;
-            }
-        }
+void selectionSortColsMatrixByColCriteria(matrix m, int (*criteria)(int *, int)) {
+    int *values = malloc(sizeof(int) * m.nCols);
 
-        if (minColIndex != i) {
-            for (int k = 0; k < m.nRows; k++) {
-               swapColumns(m, k, minColIndex);
-            }
+    for (size_t i = 0; i < m.nCols; i++) {
+        int *col = malloc(sizeof(int) * m.nRows);
+
+        for (size_t j = 0; j < m.nRows; j++)
+            col[j] = m.values[j][i];
+
+        values[i] = criteria(col, m.nRows);
+    }
+
+    for (int i = m.nCols - 1; i > 0; --i) {
+        int max = getMaxElementIndexInArray(values, i + 1);
+        if (max != i) {
+            swap(values + max, values + i);
+
+            for (size_t j = 0; j < m.nRows; j++)
+                swap(&m.values[j][max], &m.values[j][i]);
         }
     }
 }
@@ -191,9 +210,9 @@ void transposeSquareMatrix(matrix *m) {
 }
 
 void transposeMatrix(matrix *m) {
-    int **newValues = (int **)malloc(m->nCols * sizeof(int *));
+    int **newValues = (int **) malloc(m->nCols * sizeof(int *));
     for (int i = 0; i < m->nCols; i++) {
-        newValues[i] = (int *)malloc(m->nRows * sizeof(int));
+        newValues[i] = (int *) malloc(m->nRows * sizeof(int));
         for (int j = 0; j < m->nRows; j++) {
             newValues[i][j] = m->values[j][i];
         }
@@ -202,7 +221,7 @@ void transposeMatrix(matrix *m) {
     freeMemMatrix(m);
 
     m->values = newValues;
-        
+
     int temp = m->nRows;
     m->nRows = m->nCols;
     m->nCols = temp;
@@ -212,9 +231,9 @@ position getMinValuePos(matrix m) {
     int minVal = m.values[0][0];
     position minPos = {0, 0};
 
-    for(int i = 0; i < m.nRows; i++) {
+    for (int i = 0; i < m.nRows; i++) {
         for (int j = 0; j < m.nCols; j++) {
-            if(m.values[i][j] < minVal) {
+            if (m.values[i][j] < minVal) {
                 minVal = m.values[i][j];
                 minPos.rowIndex = i;
                 minPos.colIndex = j;
@@ -229,9 +248,9 @@ position getMaxValuePos(matrix m) {
     int maxVal = m.values[0][0];
     position maxPos = {0, 0};
 
-    for(int i = 0; i < m.nRows; i++) {
+    for (int i = 0; i < m.nRows; i++) {
         for (int j = 0; j < m.nCols; j++) {
-            if(m.values[i][j] > maxVal) {
+            if (m.values[i][j] > maxVal) {
                 maxVal = m.values[i][j];
                 maxPos.rowIndex = i;
                 maxPos.colIndex = j;
@@ -241,5 +260,25 @@ position getMaxValuePos(matrix m) {
 
     return maxPos;
 }
+
+matrix createMatrixFromArray(const int *a, int nRows, int nCols) {
+    matrix m = getMemMatrix(nRows, nCols);
+    int k = 0;
+    for (int i = 0; i < nRows; i++)
+        for (int j = 0; j < nCols; j++)
+            m.values[i][j] = a[k++];
+    return m;
+}
+
+matrix *createArrayOfMatrixFromArray(const int *values, int nMatrices, int nRows, int nCols) {
+    matrix *ms = getMemArrayOfMatrices(nMatrices, nRows, nCols);
+    int l = 0;
+    for (size_t k = 0; k < nMatrices; k++)
+        for (size_t i = 0; i < nRows; i++)
+            for (size_t j = 0; j < nCols; j++)
+                ms[k].values[i][j] = values[l++];
+    return ms;
+}
+
 
 #endif
